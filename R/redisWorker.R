@@ -1,5 +1,18 @@
 .doRedisGlobals <- new.env(parent=emptyenv())
 
+# .setOK and .delOK support worker fault tolerance
+`.setOK` <- function(port, host, key)
+{
+  .Call("setOK", as.integer(port), as.character(host), as.character(key),PACKAGE="doRedis")
+  invisible()
+}
+
+`.delOK` <- function()
+{
+  .Call("delOK",PACKAGE="doRedis")
+  invisible()
+}
+
 `.workerInit` <- function(expr, exportenv, packages, seed, log)
 {
 # Overried the function set.seed.worker in the exportenv to change!
@@ -18,8 +31,10 @@
    {
     if(exists('set.seed.worker',envir=.doRedisGlobals$exportenv))
       do.call('set.seed.worker',list(seed),envir=.doRedisGlobals$exportenv)
-    else
+    else if(!exists('initRNG', envir=.doRedisGlobals)) {
       set.seed((log10(as.numeric(seed))/308)*2^31)
+      assign('initRNG', TRUE, envir=.doRedisGlobals)
+    }
    },
    error=function(e) cat(as.character(e),'\n',file=log)
   )
@@ -36,35 +51,25 @@
   )
 }
 
-`.redisVersionCheck` <- function()
-{
-  return(TRUE)
-# vcheck <- TRUE
-# tryCatch(
-#  {
-#   rv <- redisInfo()$redis_version
-#   rv <- strsplit(rv,'\\.')[[1]]
-#   vcheck <- vcheck && rv[[1]] >= 1
-#   vcheck <- vcheck && rv[[2]] >= 1
-#  }, error = function(e) vcheck <<- FALSE)
-# if(!vcheck) stop("doRedis requires Redis >= 1.3.0")
-}
-
-`startLocalWorkers` <- function(n, queue, host="localhost", port=6379, iter=Inf, timeout=60, log=stderr(), Rbin=paste(R.home(component='bin'),"/R --slave",sep=""))
+`startLocalWorkers` <- function(n, queue, host="localhost", port=6379, iter=Inf, timeout=60, log=stdout(), Rbin=paste(R.home(component='bin'),"R",sep="/"))
 {
   m <- match.call()
   f <- formals()
   l <- m$log
   if(is.null(l)) l <- f$log 
   cmd <- paste("require(doRedis);redisWorker(queue='",queue,"', host='",host,"', port=",port,", iter=",iter,", timeout=",timeout,", log=",deparse(l),")",sep="")
-  for(j in 1:n) 
-    system(Rbin,input=cmd,intern=FALSE,wait=FALSE,ignore.stderr=TRUE)
+  j=0
+  args <- c("--slave","-e",paste("\"",cmd,"\"",sep=""))
+  while(j<n) { 
+#      system2(Rbin,args=args,wait=FALSE,stdout=NULL)
+    system(paste(c(Rbin,args),collapse=" "),intern=FALSE,wait=FALSE)
+    j = j + 1
+  }
 }
 
 `redisWorker` <- function(queue, host="localhost", port=6379, iter=Inf, timeout=60, log=stdout())
 {
   redisConnect(host,port)
-  .redisVersionCheck()
   assign(".jobID", "0", envir=.doRedisGlobals)
   queueLive <- paste(queue,"live",sep=".")
   for(j in queueLive)
@@ -74,13 +79,13 @@
   queueCount <- paste(queue,"count",sep=".")
   for(j in queueCount)
     tryCatch(redisIncr(j),error=function(e) invisible())
-  queueEnv <- paste(queue,"env",sep=".")
-  queueOut <- paste(queue,"out",sep=".")
   cat("Waiting for doRedis jobs.\n", file=log)
   flush.console()
   k <- 0
   while(k < iter) {
-    work <- redisBRPop(queue,timeout=timeout)
+    work <- redisBLPop(queue,timeout=timeout)
+    queueEnv <- paste(queue,"env", work[[1]]$ID, sep=".")
+    queueOut <- paste(queue,"out", work[[1]]$ID, sep=".")
 # We terminate the worker loop after a timeout when all specified work 
 # queues have been deleted.
     if(is.null(work[[1]]))
@@ -111,11 +116,24 @@
                     names(work[[1]]$argsList)[[1]],log)
         assign(".redisWorkerEnvironmentID", work$ID, envir=.doRedisGlobals)
        }
-# Now do the work:
+# XXX FT support
+      fttag <- paste(names(work[[1]]$argsList),collapse="_")
+      fttag.start <- paste(queue,"start",work[[1]]$ID,fttag,sep=".")
+      fttag.alive <- paste(queue,"alive",work[[1]]$ID,fttag,sep=".")
+# fttag.start is a permanent key
+# fttag.alive is a matching ephemeral key that is regularly kept alive by the
+# setOK helper thread. Upon disruption of the thread (for example, a crash),
+# the resulting Redis state will be an unmatched start tag, which may be used
+# by fault tolerant code to resubmit the associated jobs.
+      redisSet(fttag.start,as.integer(names(work[[1]]$argsList)))
+      .setOK(port, host, fttag.alive)
+# Now do the work.
 # XXX We assume that job order is encoded in names(argsList), cf. doRedis.
       result <- lapply(work[[1]]$argsList, .evalWrapper)
       names(result) <- names(work[[1]]$argsList)
       redisLPush(queueOut, result)
+      tryCatch(redisDelete(fttag.start), error=function(e) invisible())
+      .delOK()
     }
   }
 # Either the queue has been deleted, or we've exceeded the number of
