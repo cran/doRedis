@@ -38,6 +38,11 @@ setChunkSize <- function(value=1)
   assign('chunkSize', value, envir=.doRedisGlobals)
 }
 
+setExport <- function(names=c())
+{
+  assign('export', names, envir=.doRedisGlobals)
+}
+
 # The number of workers should be considered an estimate that may change.
 .info <- function(data, item) {
   switch(item,
@@ -110,7 +115,7 @@ setChunkSize <- function(value=1)
     }
   }
 # Compute list of variables to export
-  export <- unique(obj$export)
+  export <- unique(c(obj$export,.doRedisGlobals$export))
   ignore <- intersect(export, vars)
   if (length(ignore) > 0) {
     warning(sprintf('already exporting objects(s): %s',
@@ -164,6 +169,9 @@ setChunkSize <- function(value=1)
 # since the accumulator requires numeric job tags for ordering.
   nout <- 1
   j <- 1
+# XXX XXX To speed this up, we added nonblocking calls to rredis and use them.
+  redisSetBlocking(FALSE)
+  redisMulti()
   while(j <= njobs)
    {
     k <- min(j+chunkSize,njobs)
@@ -173,6 +181,9 @@ setChunkSize <- function(value=1)
     j <- k + 1
     nout <- nout + 1
    }
+   redisExec()
+   redisGetResponse(all=TRUE)
+   redisSetBlocking(TRUE)
 
 # Collect the results and pass through the accumulator
   j <- 1
