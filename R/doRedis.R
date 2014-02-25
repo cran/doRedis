@@ -24,6 +24,13 @@
 # The environment initialization code is adapted (with minor changes) from the
 # doMPI package by Steve Weston.
 
+# Return TRUE if Redis version >= 2.6
+version_check <- function()
+{
+  v <- as.numeric(strsplit(redisInfo()$redis_version,"\\.")[[1]])
+  v[1]>=2 && v[2]>=6
+}
+
 # Register the 'doRedis' function with %dopar%.
 registerDoRedis <- function(queue, host="localhost", port=6379, password=NULL)
 {
@@ -90,6 +97,7 @@ setPackages <- function(packages=c())
            NULL)
 }
 
+# A global workspace environment for doRedis
 .doRedisGlobals <- new.env(parent=emptyenv())
 
 # This is used for the closure's enclosing environment.
@@ -217,7 +225,8 @@ setPackages <- function(packages=c())
   task_list <- list()
   nout <- 1
   j <- 1
-# To speed this up, we use nonblocking calls to Redis.
+# To speed this up, we use nonblocking calls to Redis. We also submit all
+# the tasks in a single transaction.
   redisSetPipeline(TRUE)
   redisMulti()
   while(j <= ntasks)
@@ -240,15 +249,25 @@ setPackages <- function(packages=c())
    redisSetPipeline(FALSE)
 
 # Collect the results and pass through the accumulator
+  finished = c()
   j <- 1
   while(j < nout)
    {
     results <- tryCatch(redisBRPop(queueResults, timeout=ftinterval),error=NULL)
-    if(is.null(results)) {
+    if(is.null(results))
+    {
+
 # Check for worker fault and re-submit tasks if required...
-      started <- redisKeys(queueStart)
+      redisMulti()
+      redisKeys(queueStart)
+      redisKeys(queueAlive)
+      redisLLen(queue)    # number of queued tasks remaining
+      ans <- redisExec()
+      started <- ans[[1]]
+      alive <- ans[[2]]
+      queued <- ans[[3]]
+
       started <- gsub(sprintf("%s:%.0f.start.",queue,ID),"",started)
-      alive <- redisKeys(queueAlive)
       alive <- gsub(sprintf("%s:%.0f.alive.",queue,ID),"",alive)
       fault <- setdiff(started,alive)
       if(length(fault)>0) {
@@ -262,9 +281,18 @@ setPackages <- function(packages=c())
           redisRPush(queue, ID)
         }
       }
+# Check for imbalance in: queued + started + finished = total.
+      nq = length(setdiff(names(task_list), c(finished, started)))
+      if(queued < nq)
+      {
+        warning("Queue length off by ",nq,"...correcting")
+        replicate(nq,redisRPush(queue, ID))
+      }
     }
-    else {
+    else
+    {
       j <- j + 1
+      finished = c(finished, names(results[[1]]))
       tryCatch(accumulator(results[[1]], as.numeric(names(results[[1]]))),
         error=function(e) {
           cat('error calling combine function:\n')
