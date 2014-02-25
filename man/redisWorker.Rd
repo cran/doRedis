@@ -7,7 +7,14 @@ redisWorker
 Initialize a doRedis worker R process.
 }
 \usage{
-redisWorker(queue, host = "localhost", port = 6379, iter = Inf, timeout = 30, log = stdout())
+redisWorker(queue,
+            host = "localhost",
+            port = 6379,
+            iter = Inf,
+            timeout = 30,
+            log = stdout(),
+            connected=FALSE,
+            password=NULL)
 }
 \arguments{
   \item{queue}{
@@ -30,11 +37,18 @@ specified timeout interval.
   \item{log}{
 Log messages to the specified destination (defaults to stdout()).
 }
+  \item{connected}{
+Is the R session creating the worker already connected to Redis?
+}
+  \item{password}{
+The Redis server password.
+}
 }
 \details{
 The redisWorker function enrolls the current R session in one or
 more doRedis worker pools specified by the work queue names. The worker
-loop takes over the R session until either the work queue(s) are deleted.
+loop takes over the R session until either the work queue(s) are deleted
+or the worker times out waiting for a new task.
 }
 \value{
 Nothing is returned but status messages are printed to the log

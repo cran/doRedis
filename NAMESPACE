@@ -1,2 +1,13 @@
-exportPattern("^[[:alpha:]]+")
+export(
+  registerDoRedis,
+  removeQueue,
+  setChunkSize,
+  setExport,
+  startLocalWorkers,
+  redisWorker,
+  setTaskLabel,
+  setGetTask
+)
 import(foreach)
+import(rredis)
+import(iterators)
