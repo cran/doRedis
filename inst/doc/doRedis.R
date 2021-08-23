@@ -23,7 +23,7 @@
 ## start <- Sys.time()
 ## x <- foreach(j=1:4, .combine=sum) %dopar%
 ##      {
-##        if(difftime(Sys.time(),start) < 5) quit(save="no") else j
+##        if(difftime(Sys.time(), start) < 5) quit(save="no") else j
 ##      }
 ## 
 ## removeQueue("RJOBS")
