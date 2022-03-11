@@ -1,7 +1,7 @@
 ### R code from vignette source 'Debug.Rnw'
 
 ###################################################
-### code chunk number 1: Debug.Rnw:39-58
+### code chunk number 1: Debug.Rnw:33-52
 ###################################################
 cat('
 library(foreach)
@@ -25,7 +25,7 @@ foreach(j=1:3, .errorhandling="pass") %dopar%
 
 
 ###################################################
-### code chunk number 2: Debug.Rnw:75-103
+### code chunk number 2: Debug.Rnw:69-97
 ###################################################
 cat('
 library(doRedis)
@@ -58,7 +58,7 @@ file.show("/tmp/cazart.log")
 
 
 ###################################################
-### code chunk number 3: Debug.Rnw:144-154
+### code chunk number 3: Debug.Rnw:138-148
 ###################################################
 cat('
 library(doRedis)
@@ -73,7 +73,7 @@ removeQueue("cazart")  # remove the work queue
 
 
 ###################################################
-### code chunk number 4: Debug.Rnw:157-170
+### code chunk number 4: Debug.Rnw:151-164
 ###################################################
 cat('
 library(doRedis)
