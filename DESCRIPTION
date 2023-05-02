@@ -1,8 +1,8 @@
 Package: doRedis
 Type: Package
 Title: 'Foreach' Parallel Adapter Using the 'Redis' Database
-Version: 3.0.1
-Date: 2022-3-9
+Version: 3.0.2
+Date: 2023-5-1
 Author: B. W. Lewis <blewis@illposed.net>
 Maintainer: B. W. Lewis <blewis@illposed.net>
 Description: Create and manage fault-tolerant task queues for the 'foreach' package using the 'Redis' key/value database.
@@ -13,6 +13,6 @@ License: GPL-2
 LazyLoad: yes
 RoxygenNote: 7.1.1
 NeedsCompilation: yes
-Packaged: 2022-03-11 14:06:50 UTC; blewis
+Packaged: 2023-05-02 01:25:00 UTC; blewis
 Repository: CRAN
-Date/Publication: 2022-03-11 14:30:02 UTC
+Date/Publication: 2023-05-02 11:30:03 UTC
