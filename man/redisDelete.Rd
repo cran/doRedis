@@ -15,6 +15,3 @@ Redis status message
 \description{
 A convenience function to delete a Redis key
 }
-\seealso{
-\code{\link{hiredis}}
-}

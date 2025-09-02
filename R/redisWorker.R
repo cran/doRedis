@@ -83,7 +83,7 @@
 #' \code{removeQueue} function, or when network activity with Redis remains
 #' inactive for longer than the \code{timeout} period set in the \code{redisConnect}
 #' function. That value defaults internally to 3600 (one hour) in \code{startLocalWorkers}.
-#' You can increase it by including a {timeout=n} argument value.
+#' You can increase it by including a \code{timeout=n} argument value.
 #'
 #' @param n number of workers to start
 #' @param queue work queue name
@@ -167,7 +167,7 @@ startLocalWorkers <- function(n, queue, host="localhost", port=6379,
 #' Running workers also terminate after network activity with Redis remains
 #' inactive for longer than the \code{timeout} period set in the \code{redisConnect}
 #' function. That value defaults internally to 30 seconds in \code{redisWorker}.
-#' You can increase it by including a {timeout=n} argument value.
+#' You can increase it by including a \code{timeout=n} argument value.
 #'
 #'
 #' @param queue work queue name or a vector of queue names

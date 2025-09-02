@@ -158,7 +158,7 @@ sendall (int s, char *buf, size_t * len)
 {
   size_t total = 0;             // how many bytes we've sent
   size_t bytesleft = *len;      // how many we have left to send
-  int n;
+  int n = 0;
 
   while (total < *len)
     {

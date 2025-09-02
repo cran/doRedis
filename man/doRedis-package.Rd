@@ -2,6 +2,7 @@
 % Please edit documentation in R/package.R
 \docType{package}
 \name{doRedis-package}
+\alias{doRedis}
 \alias{doRedis-package}
 \title{A Redis parallel back end for foreach.}
 \description{
@@ -10,4 +11,8 @@ for foreach using the Redis key/value database.
 }
 \seealso{
 \code{\link{registerDoRedis}}, \code{\link{startLocalWorkers}}
+}
+\author{
+\strong{Maintainer}: B. W. Lewis \email{blewis@illposed.net}
+
 }

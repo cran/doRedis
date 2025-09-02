@@ -50,7 +50,6 @@ redisExists <- function(key)
 #' @param key (character or raw) Redis key name
 #' @param val R value to set
 #' @return Redis status message
-#' @seealso \code{\link{hiredis}}
 #' @export
 redisSet <- function(key, val)
 {
@@ -62,7 +61,6 @@ redisSet <- function(key, val)
 #'
 #' @param key (character or raw) Redis key name to delete
 #' @return Redis status message
-#' @seealso \code{\link{hiredis}}
 #' @export
 redisDelete <- function(key)
 {
@@ -77,7 +75,6 @@ redisDelete <- function(key)
 #'
 #' @param key (character or raw) Redis key name
 #' @return Unserialized R value.
-#' @seealso \code{\link{hiredis}}
 #' @export
 redisGet <- function(key)
 {

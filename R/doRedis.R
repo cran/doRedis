@@ -60,7 +60,7 @@
 #' # Note that removing the work queue automatically terminates worker processes.
 #' }
 #'
-#' @seealso \code{\link{foreach}}, \code{\link{doRedis-package}}, \code{\link{setChunkSize}}, \code{\link{removeQueue}}
+#' @seealso \code{\link{doRedis-package}}, \code{\link{setChunkSize}}, \code{\link{removeQueue}}
 #'
 #' @import foreach
 #' @importFrom iterators nextElem iter

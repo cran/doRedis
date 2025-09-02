@@ -87,5 +87,5 @@ print(pie)
 
 }
 \seealso{
-\code{\link{foreach}}, \code{\link{doRedis-package}}, \code{\link{setChunkSize}}, \code{\link{removeQueue}}
+\code{\link{doRedis-package}}, \code{\link{setChunkSize}}, \code{\link{removeQueue}}
 }
